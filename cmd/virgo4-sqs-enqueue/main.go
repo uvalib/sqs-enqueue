@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/uvalib/virgo4-sqs-sdk/awssqs"
@@ -47,15 +50,14 @@ func main() {
 		// attempt to load up to MAX_SQS_BLOCK_COUNT messages
 		for {
 
-			filename := fmt.Sprintf( "%s/message.%05d", cfg.InDir, count )
-			contents, err := readMessage( filename )
+			message, err := loadMessage( cfg, count )
 			if err != nil {
 				no_more_files = true
 				break
 			}
 
 			// add a message to the block
-			block = append( block, constructMessage( filename, contents ) )
+			block = append( block, *message )
 			count++
 
 			// have we done another complete block
@@ -85,7 +87,7 @@ func main() {
 		}
 
 		if no_more_files == true {
-			log.Printf("No more files, terminating" )
+			log.Printf("No more files (%d processed), terminating", count )
 			break
 		}
 
@@ -96,9 +98,17 @@ func main() {
 	}
 }
 
-func readMessage( filename string ) ( []byte, error ) {
+func loadMessage( config * ServiceConfig, index uint ) ( * awssqs.Message, error ) {
 
-	info, err := os.Stat( filename )
+	payloadName := fmt.Sprintf( "%s/payload.%05d", config.InDir, index )
+	attribsName := fmt.Sprintf( "%s/attribs.%05d", config.InDir, index )
+
+	info, err := os.Stat( attribsName )
+	if err != nil {
+		return nil, err
+	}
+
+	info, err = os.Stat( payloadName )
 	if err != nil {
 		return nil, err
 	}
@@ -106,28 +116,44 @@ func readMessage( filename string ) ( []byte, error ) {
 	sz := info.Size( )
 	contents := make( []byte, sz )
 
-	file, err := os.Open( filename )
+	payloadFile, err := os.Open( payloadName )
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer payloadFile.Close()
 
-	_, err = file.Read( contents )
+	_, err = payloadFile.Read( contents )
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Read %s (%d bytes)", filename, sz )
-	return contents, nil
-}
+	message := &awssqs.Message{ Payload: awssqs.Payload( contents ) }
 
-func constructMessage( filename string, message []byte ) awssqs.Message {
+	attribsFile, err := os.Open( attribsName )
+	if err != nil {
+		return nil, err
+	}
+	defer attribsFile.Close()
+	reader := bufio.NewReader( attribsFile )
+	for {
+		line, err := reader.ReadString('\n')
 
-	attributes := make( []awssqs.Attribute, 0, 1 )
-	//attributes = append( attributes, awssqs.Attribute{ "op", "add" } )
-	attributes = append( attributes, awssqs.Attribute{ "src", filename } )
-	//attributes = append( attributes, awssqs.Attribute{ "type", "xml"} )
-	return awssqs.Message{ Attribs: attributes, Payload: awssqs.Payload( message )}
+		if err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				return nil, err
+			}
+		}
+
+		// split at the first = character and assign to the attributes
+		tokens := strings.SplitN( line, "=", 2 )
+		if tokens != nil {
+			message.Attribs = append( message.Attribs, awssqs.Attribute{ Name: tokens[ 0 ], Value: tokens[ 1 ] })
+		}
+	}
+
+	return message, nil
 }
 
 //
