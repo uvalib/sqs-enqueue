@@ -7,9 +7,9 @@ import (
 
 // ServiceConfig defines all of the service configuration parameters
 type ServiceConfig struct {
-	OutQueueName  string
-	InDir         string
-	MaxCount      uint
+	OutQueueName string
+	InDir        string
+	MaxCount     uint
 }
 
 // LoadConfiguration will load the service configuration from env/cmdline
@@ -23,16 +23,16 @@ func LoadConfiguration() *ServiceConfig {
 
 	flag.Parse()
 
-	if len( cfg.OutQueueName ) == 0 {
-		log.Fatalf( "OutQueueName cannot be blank" )
+	if len(cfg.OutQueueName) == 0 {
+		log.Fatalf("OutQueueName cannot be blank")
 	}
-	if len( cfg.InDir ) == 0 {
-		log.Fatalf( "InDir cannot be blank" )
+	if len(cfg.InDir) == 0 {
+		log.Fatalf("InDir cannot be blank")
 	}
 
-	log.Printf("[CONFIG] OutQueueName         = [%s]", cfg.OutQueueName )
-	log.Printf("[CONFIG] InDir                = [%s]", cfg.InDir )
-	log.Printf("[CONFIG] MaxCount             = [%d]", cfg.MaxCount )
+	log.Printf("[CONFIG] OutQueueName         = [%s]", cfg.OutQueueName)
+	log.Printf("[CONFIG] InDir                = [%s]", cfg.InDir)
+	log.Printf("[CONFIG] MaxCount             = [%d]", cfg.MaxCount)
 
 	return &cfg
 }
