@@ -23,7 +23,7 @@ func main() {
 	cfg := LoadConfiguration()
 
 	// load our AWS_SQS helper object
-	aws, err := awssqs.NewAwsSqs(awssqs.AwsSqsConfig{ MessageBucketName: cfg.MessageBucketName })
+	aws, err := awssqs.NewAwsSqs(awssqs.AwsSqsConfig{MessageBucketName: cfg.MessageBucketName})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func loadMessage(config *ServiceConfig, index uint) (*awssqs.Message, error) {
 
 		// split at the first = character and assign to the attributes
 		tokens := strings.SplitN(line, "=", 2)
-		if len( tokens ) == 2 {
+		if len(tokens) == 2 {
 			message.Attribs = append(message.Attribs, awssqs.Attribute{Name: tokens[0], Value: tokens[1]})
 		}
 	}
