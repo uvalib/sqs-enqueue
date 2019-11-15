@@ -103,12 +103,12 @@ func loadMessage(config *ServiceConfig, index uint) (*awssqs.Message, error) {
 	payloadName := fmt.Sprintf("%s/payload.%05d", config.InDir, index)
 	attribsName := fmt.Sprintf("%s/attribs.%05d", config.InDir, index)
 
-	info, err := os.Stat(attribsName)
+	_, err := os.Stat(attribsName)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err = os.Stat(payloadName)
+	info, err := os.Stat(payloadName)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func loadMessage(config *ServiceConfig, index uint) (*awssqs.Message, error) {
 
 		// split at the first = character and assign to the attributes
 		tokens := strings.SplitN(line, "=", 2)
-		if tokens != nil && len( tokens ) == 2 {
+		if len( tokens ) == 2 {
 			message.Attribs = append(message.Attribs, awssqs.Attribute{Name: tokens[0], Value: tokens[1]})
 		}
 	}
