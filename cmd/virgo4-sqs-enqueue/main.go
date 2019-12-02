@@ -147,6 +147,7 @@ func loadMessage(config *ServiceConfig, index uint) (*awssqs.Message, error) {
 		}
 
 		// split at the first = character and assign to the attributes
+		line = strings.TrimSuffix(line, "\n")
 		tokens := strings.SplitN(line, "=", 2)
 		if len(tokens) == 2 {
 			message.Attribs = append(message.Attribs, awssqs.Attribute{Name: tokens[0], Value: tokens[1]})
